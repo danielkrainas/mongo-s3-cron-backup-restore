@@ -2,7 +2,7 @@
 
 # Automatic mongodb restore and cron based backups
 
-It starts cron service and creates 
+It starts cron service and creates
 backup in S3 bucket **using same file every time**. There is no backup retention. To do that enable versioning on your S3 bucket.
 
 To manually trigger backup:
@@ -67,3 +67,5 @@ services:
 * CRON_SCHEDULE - (optional) cron schedule, defaults to 0 3 * * * (at 3 am, every day)
 * MONGO_HOST - (optional) defaults to mongodb
 * MONGO_PORT - (optional) defaults to 27017
+* DUMP_ARGS - (optional) extra arguments passed to `mongodump`
+* RESTORE_ARGS - (optional) extra arguments passed to `mongorestore`
