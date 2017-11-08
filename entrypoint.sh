@@ -43,8 +43,8 @@ FILENAME=$FILEPREFIX.latest.tar.gz
 
 if [ "$1" == "backup" ] ; then
   echo "Starting backup (v4) ... $(date)"
-  echo "mongodump --quiet -h $MONGO_HOST -p $MONGO_PORT $DB_ARG"
-  mongodump -h $MONGO_HOST -p $MONGO_PORT $DB_ARG
+  echo "mongodump --quiet -h $MONGO_HOST -p $MONGO_PORT $DB_ARG $DUMP_ARGS"
+  mongodump -h $MONGO_HOST -p $MONGO_PORT $DB_ARG $DUMP_ARGS
   ls
   if [ -d dump ] ; then
       tar -zcvf latest.tar.gz dump/
@@ -65,7 +65,7 @@ if [ "$1" == "restore" ] ; then
     aws s3api get-object --bucket $S3BUCKET --key $FILENAME latest.tar.gz
     if [ -e latest.tar.gz ] ; then
         tar zxfv latest.tar.gz
-        mongorestore --drop -h $MONGO_HOST -p $MONGO_PORT dump/
+        mongorestore --drop -h $MONGO_HOST -p $MONGO_PORT $RESTORE_ARGS dump/
         echo "Cleaning up..."
         rm -rf dump/ latest.tar.gz
     else
@@ -88,6 +88,8 @@ CRON_ENV="$CRON_ENV\nAWS_SECRET_ACCESS_KEY='$AWS_SECRET_ACCESS_KEY'"
 CRON_ENV="$CRON_ENV\nS3BUCKET='$S3BUCKET'"
 CRON_ENV="$CRON_ENV\nDB='$DB'"
 CRON_ENV="$CRON_ENV\nPATH=$PATH"
+CRON_ENV="$CRON_ENV\nDUMP_ARGS='$DUMP_ARGS'"
+CRON_ENV="$CRON_ENV\nRESTORE_ARGS='$RESTORE_ARGS'"
 CRON_ENV="$CRON_ENV\nFILEPREFIX=$FILEPREFIX"
 
 echo -e "$CRON_ENV\n$CRON_SCHEDULE /entrypoint.sh backup > $LOGFIFO 2>&1" | crontab -
