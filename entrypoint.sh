@@ -52,8 +52,14 @@ if [ "$1" == "backup" ] ; then
       aws s3api put-object --bucket $S3BUCKET --key $FILENAME --body latest.tar.gz
       echo "Cleaning up..."
       rm -rf dump/ latest.tar.gz
+      if [ ! -z "$SLACK_WEBHOOK" ] ; then
+        curl -X POST -H 'Content-type: application/json' --data '{"text": "I finished backing up the database :tada:"}' $SLACK_WEBHOOK
+      fi
   else
       echo "No data to backup"
+      if [ ! -z "$SLACK_WEBHOOK" ] ; then
+        curl -X POST -H 'Content-type: application/json' --data '{"text": "Umm.. this database is empty? Nothing to back up."}' $SLACK_WEBHOOK
+      fi
   fi
   exit 0
 fi
@@ -68,8 +74,14 @@ if [ "$1" == "restore" ] ; then
         mongorestore --drop -h $MONGO_HOST -p $MONGO_PORT $RESTORE_ARGS dump/
         echo "Cleaning up..."
         rm -rf dump/ latest.tar.gz
+        if [ ! -z "$SLACK_WEBHOOK" ] ; then
+          curl -X POST -H 'Content-type: application/json' --data '{"text": "I finished restoring the database :tada:"}' $SLACK_WEBHOOK
+        fi
     else
         echo "No backup to restore"
+        if [ ! -z "$SLACK_WEBHOOK" ] ; then
+          curl -X POST -H 'Content-type: application/json' --data '{"text": "Umm.. so I could not find the backup file?"}' $SLACK_WEBHOOK
+        fi
     fi
     exit 0
 fi
@@ -91,6 +103,7 @@ CRON_ENV="$CRON_ENV\nPATH=$PATH"
 CRON_ENV="$CRON_ENV\nDUMP_ARGS='$DUMP_ARGS'"
 CRON_ENV="$CRON_ENV\nRESTORE_ARGS='$RESTORE_ARGS'"
 CRON_ENV="$CRON_ENV\nFILEPREFIX=$FILEPREFIX"
+CRON_ENV="$CRON_ENV\nSLACK_WEBHOOK=$SLACK_WEBHOOK"
 
 echo -e "$CRON_ENV\n$CRON_SCHEDULE /entrypoint.sh backup > $LOGFIFO 2>&1" | crontab -
 crontab -l
